@@ -14,7 +14,33 @@ class Application extends BaseApplication {
             return;
         }
 
+        //-------------------------
         echo "Starting Object Storage Manager\n";
+
+        $db = $this->db;
+
+        $fetchLimit = $this->config()["app"]["fetchlimit"] ?? 10;
+
+        $data = $db->selectAll(<<<SQL
+            SELECT *
+              FROM tblUploadQueue
+             WHERE (uquLockedAt IS NULL
+                OR uquLockedAt < DATE_SUB(NOW(), INTERVAL 1 Hour)
+                   )
+               AND (uquStatus = 'N'
+                OR (uquStatus = 'E'
+               AND uquLastTryAt < DATE_SUB(NOW(), INTERVAL 10 Minute)
+                   )
+                   )
+          ORDER BY uquCreationDateTime ASC
+             LIMIT {$fetchLimit}
+SQL
+        );
+
+        print_r($data);
+
+        if (empty($data))
+            return;
 
     }
 
