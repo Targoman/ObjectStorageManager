@@ -1,0 +1,16 @@
+{
+    "name": "targoman/objectstorage-manager",
+    "description": "Object Storage manager for TAPI",
+    "type": "project",
+    "authors": [
+        {
+            "name": "kambizzandi",
+            "email": "kambizzandi@gmail.com"
+        }
+    ],
+    "require": {
+        "kambizzandi/php-framework" : "*",
+        "symfony/mailer": "^5.4"
+    },
+    "minimum-stability" : "dev"
+}
