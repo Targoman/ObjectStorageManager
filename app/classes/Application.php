@@ -15,6 +15,7 @@ class Application extends BaseApplication {
         }
 
         echo "Starting Object Storage Manager\n";
+
     }
 
 };
