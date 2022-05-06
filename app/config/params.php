@@ -1,5 +1,7 @@
 <?php
-// @author: Kambiz Zandi <kambizzandi@gmail.com>
+/**
+ * @author: Kambiz Zandi <kambizzandi@gmail.com>
+ */
 
 return [
     "app" => [
@@ -13,33 +15,6 @@ return [
             "username" => "",
             "password" => "",
             "schema" => "",
-        ],
-        "smsgateway" => [
-            "username" => "",
-            "password" => "",
-            // "linenumber" => "",
-            "bodyid" => [
-                "service1" => [
-                    "en" => "",
-                    "fa" => "",
-                ],
-                "service2" => [
-                    "en" => "",
-                    "fa" => "",
-                ],
-            ],
-        ],
-        "mailer" => [
-            "transport" => [
-                'scheme' => "smtp",
-                "host" => "",
-                "username" => "",
-                "password" => "",
-                "port" => "",
-                "options" => [
-                    "verify_peer" => false,
-                ],
-            ],
         ],
     ],
 ];

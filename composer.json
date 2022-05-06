@@ -10,7 +10,8 @@
     ],
     "require": {
         "kambizzandi/php-framework" : "*",
-        "symfony/mailer": "^5.4"
+        "symfony/mailer": "^5.4",
+        "aws/aws-sdk-php": "^3.222"
     },
     "minimum-stability" : "dev"
 }
