@@ -6,7 +6,7 @@
 return [
     "app" => [
         "instanceId" => "",
-        "fetchlimit" => "100",
+        "fetchlimit" => 100,
     ],
     "components" => [
         "db" => [
