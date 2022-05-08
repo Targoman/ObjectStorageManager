@@ -5,8 +5,8 @@
 
 return [
     "app" => [
+        "instanceId" => "",
         "fetchlimit" => "100",
-        "emailFrom" => "",
     ],
     "components" => [
         "db" => [

@@ -8,7 +8,7 @@ return [
     ],
     "components" => [
         "db" => [
-            "class" => "Framework\\db\\MySql",
+            "class" => "Targoman\\Framework\\db\\MySql",
         ],
     ],
 ];

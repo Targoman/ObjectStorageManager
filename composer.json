@@ -8,9 +8,11 @@
             "email": "kambizzandi@gmail.com"
         }
     ],
+    "repositories": [
+        { "type": "vcs", "url": "https://github.com/targoman/php-micro-framework" }
+    ],
     "require": {
-        "kambizzandi/php-framework" : "*",
-        "symfony/mailer": "^5.4",
+        "targoman/php-micro-framework" : "dev-predev",
         "aws/aws-sdk-php": "^3.222"
     },
     "minimum-stability" : "dev"

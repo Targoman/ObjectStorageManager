@@ -4,5 +4,5 @@
  */
 
 return [
-    "Targoman\\ObjectStorageManager" => __DIR__ . '/app'
+    "Targoman\\ObjectStorageManager\\" => __DIR__ . '/app'
 ];

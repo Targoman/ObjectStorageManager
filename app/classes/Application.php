@@ -6,7 +6,7 @@
 namespace Targoman\ObjectStorageManager\classes;
 
 use Exception;
-use Framework\core\Application as BaseApplication;
+use Targoman\Framework\core\Application as BaseApplication;
 
 class Application extends BaseApplication {
 
@@ -20,6 +20,20 @@ class Application extends BaseApplication {
         }
 
         //-------------------------
+        $instanceId = $this->config()["app"]["instanceId"] ?? null;
+        if (empty($instanceId)) {
+            $instanceId = "OSM-" . uniqid(true);
+
+            $fileName = __DIR__ . '/../config/params-local.php';
+            $localParams = require($fileName);
+            $localParams["app"]["instanceId"] = $instanceId;
+
+
+
+
+        }
+
+
         $db = $this->db;
 
         $fetchLimit = $this->config()["app"]["fetchlimit"] ?? 10;
