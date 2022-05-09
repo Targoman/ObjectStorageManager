@@ -5,10 +5,12 @@
 
 namespace Targoman\ObjectStorageManager\classes;
 
-use Exception;
-use Framework\core\Application as BaseApplication;
+use \Exception;
+use Targoman\Framework\core\Application as BaseApplication;
 
 class Application extends BaseApplication {
+    public $instanceId;
+    public $fetchlimit = 1;
 
     public function run() {
         echo "Starting Object Storage Manager\n";
@@ -20,11 +22,20 @@ class Application extends BaseApplication {
         }
 
         //-------------------------
+        if (empty($this->instanceId)) {
+            $this->instanceId = "OSM-" . uniqid(true);
+
+            $fileName = __DIR__ . '/../config/params-local.php';
+            $localParams = require($fileName);
+            $localParams["app"]["instanceId"] = $this->instanceId;
+
+            ///@TODO: save instanceId to config file
+        }
+
+        //-------------------------
         $db = $this->db;
 
-        $fetchLimit = $this->config()["app"]["fetchlimit"] ?? 10;
-
-        $data = $db->selectAll(<<<SQL
+        $qry = <<<SQL
             SELECT *
               FROM tblUploadQueue
         INNER JOIN tblUploadFiles
@@ -33,6 +44,7 @@ class Application extends BaseApplication {
                 ON tblUploadGateways.ugwID = tblUploadQueue.uqu_ugwID
              WHERE (uquLockedAt IS NULL
                 OR uquLockedAt < DATE_SUB(NOW(), INTERVAL 1 HOUR)
+                OR uquLockedBy = ?
                    )
                AND (uquStatus = 'N'
                 OR (uquStatus = 'E'
@@ -40,11 +52,13 @@ class Application extends BaseApplication {
                    )
                    )
           ORDER BY uquCreationDateTime ASC
-             LIMIT {$fetchLimit}
-SQL
-        );
+             LIMIT {$this->fetchlimit}
+SQL;
+        $data = $db->selectAll($qry, [
+            1 => $this->instanceId,
+        ]);
 
-        print_r($data);
+        // print_r($data);
 
         if (empty($data))
             return;
@@ -54,17 +68,21 @@ SQL
         // print_r($ids);
 
         if (empty($ids))
-            throw new \Exception("Error in gathering ids");
+            throw new Exception("Error in gathering ids");
 
         //lock items
-        $rowsCount = $db->execute(strtr(<<<SQL
+        $qry = strtr(<<<SQL
             UPDATE tblUploadQueue
                SET uquLockedAt = NOW()
+                 , uquLockedBy = ?
              WHERE uquID IN (:ids)
 SQL
         , [
             ':ids' => implode(',', $ids),
-        ]));
+        ]);
+        $rowsCount = $db->execute($qry, [
+            1 => $this->instanceId,
+        ]);
 
         // print_r([implode(',', $ids), $rowsCount]);
 
@@ -130,7 +148,7 @@ SQL
             $runResult = NULL;
             try {
                 if (file_exists($uflLocalFullFileName) == false)
-                    throw new \Exception("file not found: $uflLocalFullFileName");
+                    throw new Exception("file not found: $uflLocalFullFileName");
 
                 if (empty($ugwMetaInfo) == false)
                     $ugwMetaInfo = json_decode($ugwMetaInfo, true);
@@ -172,17 +190,17 @@ SQL
 
                     if (file_exists($Path) == false)
                         if (mkdir($Path, 0777, true) == false)
-                            throw new \Exception("error in create folder");
+                            throw new Exception("error in create folder");
 
                     if (copy($uflLocalFullFileName, "$Path/$uflStoredFileName") == false)
-                        throw new \Exception("error in copy file");
+                        throw new Exception("error in copy file");
 
                     $isOk = true;
 
                 } else { //unknown ugwType
-                    throw new \Exception("unknown gateway type: $ugwType");
+                    throw new Exception("unknown gateway type: $ugwType");
                 }
-            } catch(\Exception $_exp) {
+            } catch(Exception $_exp) {
                 $isOk = false;
                 $runResult = $_exp->getMessage();
             }
@@ -192,20 +210,22 @@ SQL
             else
                 echo "[FAILED: $runResult]\n";
 
-            $rowsCount = $this->db->execute(<<<SQL
+            $_uquStoredAt = ($isOk ? 'NOW()' : 'NULL');
+            $qry = <<<SQL
             UPDATE tblUploadQueue
                SET uquLockedAt = NULL
+                 , uquLockedBy = NULL
                  , uquLastTryAt = NOW()
+                 , uquStoredAt = {$_uquStoredAt}
                  , uquResult = ?
                  , uquStatus = ?
              WHERE uquID = ?
-SQL
-            , [
-                1 => ($isOk ? 'S' : 'E'),
-                2 => $runResult,
+SQL;
+            $rowsCount = $db->execute($qry, [
+                1 => $runResult,
+                2 => ($isOk ? 'S' : 'E'),
                 3 => $uquID,
             ]);
-
         }
     }
 

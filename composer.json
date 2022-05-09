@@ -9,8 +9,7 @@
         }
     ],
     "require": {
-        "kambizzandi/php-framework" : "*",
-        "symfony/mailer": "^5.4",
+        "targoman/php-micro-framework" : "dev-predev",
         "aws/aws-sdk-php": "^3.222"
     },
     "minimum-stability" : "dev"
