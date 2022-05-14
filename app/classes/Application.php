@@ -7,30 +7,45 @@ namespace Targoman\ObjectStorageManager\classes;
 
 use \Exception;
 use Targoman\Framework\core\Application as BaseApplication;
+use Targoman\Framework\helpers\ArrayHelper;
 
 class Application extends BaseApplication {
     public $instanceId;
     public $fetchlimit = 1;
 
     public function run() {
-        echo "Starting Object Storage Manager\n";
-
-        $a = shell_exec('ps -aux | grep "ObjectStorageManager.php" | grep "php "');
-        if (substr_count($a, "\n") > 2) {
-            echo "ObjectStorageManager is running\n";
-            return;
-        }
-
-        //-------------------------
         if (empty($this->instanceId)) {
             $this->instanceId = "OSM-" . uniqid(true);
 
+            $localParams = [];
             $fileName = __DIR__ . '/../config/params-local.php';
-            $localParams = require($fileName);
+            if (file_exists($fileName)) {
+                $localParams = require($fileName);
+            }
+
             $localParams["app"]["instanceId"] = $this->instanceId;
 
-            ///@TODO: save instanceId to config file
+            $conf = ArrayHelper::dump($localParams);
+            $conf = "<?php\n" . "return " . $conf . ";\n";
+            file_put_contents($fileName, $conf);
         }
+
+        //-------------------------
+        $this->logger->setActor($this->instanceId);
+
+        $this->logger->log("---------- Starting Object Storage Manager ----------");
+
+        //-------------------------
+        $command = 'ps aux | grep "ObjectStorageManager.php" | grep "php "';
+        exec($command, $output, $return_var);
+        // var_dump($output);
+        // var_dump($return_var);
+        if ($return_var != 0)
+            throw new Exception("Error in `ps`");
+        // $output = shell_exec('ps aux | grep "ObjectStorageManager.php" | grep "php "');
+        // if (substr_count($output, "\n") > 2)
+        if (count($output) > 2)
+            throw new Exception("Object Storage Manager is running");
 
         //-------------------------
         $db = $this->db;
@@ -58,17 +73,18 @@ SQL;
             1 => $this->instanceId,
         ]);
 
-        // print_r($data);
-
-        if (empty($data))
+        if (empty($data)) {
+            $this->logger->log("Nothing to do");
             return;
+        }
+
+        $this->logger->log("Count of items: " . count($data));
 
         $ids = array_map(function ($ar) { return $ar["uquID"]; }, $data);
-
-        // print_r($ids);
-
         if (empty($ids))
             throw new Exception("Error in gathering ids");
+
+        $this->logger->log("Items ID: " . implode(',', $ids));
 
         //lock items
         $qry = strtr(<<<SQL
@@ -142,7 +158,7 @@ SQL
             $ugwCreatedBy_usrID         = $row["ugwCreatedBy_usrID"];
             $ugwUpdatedBy_usrID         = $row["ugwUpdatedBy_usrID"];
 
-            echo "Storing ($uflLocalFullFileName) id($uquID) ";
+            $this->logger->log("Storing ($uflLocalFullFileName) id($uquID)");
 
             $isOk = false;
             $runResult = NULL;
@@ -206,9 +222,9 @@ SQL
             }
 
             if ($isOk)
-                echo "[OK]\n";
+                $this->logger->log("[OK]");
             else
-                echo "[FAILED: $runResult]\n";
+                $this->logger->log("[FAILED: $runResult]");
 
             $_uquStoredAt = ($isOk ? 'NOW()' : 'NULL');
             $qry = <<<SQL
